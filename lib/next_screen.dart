@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'openai_response_screen.dart';
-import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 class NextScreen extends StatefulWidget {
   final List<File> images;
@@ -24,46 +23,17 @@ class _NextScreenState extends State<NextScreen> {
     return 'image/jpeg'; // default
   }
 
-  Future<String?> _detectFaceShape(File imageFile) async {
-    final inputImage = InputImage.fromFile(imageFile);
-    final options = FaceDetectorOptions(
-      enableLandmarks: true,
-      enableContours: true,
-      performanceMode: FaceDetectorMode.accurate,
-    );
-    final faceDetector = FaceDetector(options: options);
-    final faces = await faceDetector.processImage(inputImage);
-    await faceDetector.close();
-    if (faces.isEmpty) return null;
-    final face = faces.first;
-    // Use available landmarks
-    final leftCheek = face.landmarks[FaceLandmarkType.leftCheek]?.position;
-    final rightCheek = face.landmarks[FaceLandmarkType.rightCheek]?.position;
-    final noseBase = face.landmarks[FaceLandmarkType.noseBase]?.position;
-    final mouthLeft = face.landmarks[FaceLandmarkType.mouthLeftPoint]?.position;
-    final mouthRight = face.landmarks[FaceLandmarkType.mouthRightPoint]?.position;
-    if (leftCheek == null || rightCheek == null || noseBase == null || mouthLeft == null || mouthRight == null) return null;
-    final faceWidth = (rightCheek.x - leftCheek.x).abs();
-    final mouthAvgY = (mouthLeft.y + mouthRight.y) / 2;
-    final faceHeight = (mouthAvgY - noseBase.y).abs();
-    final ratio = faceWidth / faceHeight;
-    if (ratio > 0.95 && ratio < 1.05) return 'round';
-    if (ratio < 0.95) return 'oval';
-    if (ratio > 1.05) return 'square';
-    return 'unknown';
-  }
-
   Future<void> _sendToOpenAI(BuildContext context) async {
     setState(() => _loading = true);
     try {
-      // Only use the first image for face shape detection
-      final faceShape = await _detectFaceShape(widget.images.first);
-      if (faceShape == null || faceShape == 'unknown') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not detect face shape.')),
-        );
-        setState(() => _loading = false);
-        return;
+      List<Map<String, String>> imagesData = [];
+      for (final img in widget.images) {
+        final bytes = await img.readAsBytes();
+        final mime = _getMimeType(img.path);
+        imagesData.add({
+          'b64': base64Encode(bytes),
+          'mime': mime,
+        });
       }
       final apiKey = dotenv.env['OPENAI_API_KEY'];
       if (apiKey == null || apiKey.isEmpty) {
@@ -72,20 +42,30 @@ class _NextScreenState extends State<NextScreen> {
         );
         setState(() => _loading = false);
         return;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${widget.images.length} images selected')),
+        );
       }
       final url = Uri.parse('https://api.openai.com/v1/chat/completions');
       final messages = [
         {
           "role": "user",
           "content": [
-            {"type": "text", "text": "My face shape is $faceShape. Based on visagism, what haircut styles would best suit me?"}
+            {"type": "text", 
+            "text": "Please review the facial structure and geometry in these photos. Based on general face shape characteristics and hairstyle compatibility principles (like visagism), suggest haircut styles that are commonly recommended for similar facial shapes. Avoid making assumptions about identity or attractiveness."},
+            ...imagesData.map((img) => {
+              "type": "image_url",
+              "image_url": {"url": "data:${img['mime']};base64,${img['b64']}"}
+            })
           ]
         }
       ];
       final body = jsonEncode({
         "model": "gpt-4o",
         "messages": messages,
-        "max_tokens": 300
+        "max_tokens": 500,
+        "temperature": 0.7
       });
       final response = await http.post(
         url,
@@ -108,6 +88,7 @@ class _NextScreenState extends State<NextScreen> {
         ),
       );
     } catch (e, stack) {
+      // Print error and stack trace to console
       print('Error: $e');
       print('Stack trace: $stack');
       if (!mounted) return;
