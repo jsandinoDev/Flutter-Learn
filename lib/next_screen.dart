@@ -30,10 +30,7 @@ class _NextScreenState extends State<NextScreen> {
       for (final img in widget.images) {
         final bytes = await img.readAsBytes();
         final mime = _getMimeType(img.path);
-        imagesData.add({
-          'b64': base64Encode(bytes),
-          'mime': mime,
-        });
+        imagesData.add({'b64': base64Encode(bytes), 'mime': mime});
       }
       final apiKey = dotenv.env['OPENAI_API_KEY'];
       if (apiKey == null || apiKey.isEmpty) {
@@ -50,22 +47,34 @@ class _NextScreenState extends State<NextScreen> {
       final url = Uri.parse('https://api.openai.com/v1/chat/completions');
       final messages = [
         {
+          "role": "system",
+          "content":
+              "You are a professional visagism consultant. Only answer based on the images provided. Do not provide generic advice, disclaimers, or privacy statements. Go straight to the analysis and recommendations.",
+        },
+        {
           "role": "user",
           "content": [
-            {"type": "text", 
-            "text": "Please review the facial structure and geometry in these photos. Based on general face shape characteristics and hairstyle compatibility principles (like visagism), suggest haircut styles that are commonly recommended for similar facial shapes. Avoid making assumptions about identity or attractiveness."},
-            ...imagesData.map((img) => {
-              "type": "image_url",
-              "image_url": {"url": "data:${img['mime']};base64,${img['b64']}"}
-            })
-          ]
-        }
+            {
+              "type": "text",
+              "text":
+                  "Analyze the face(s) in these images. What is the face shape? Based only on the images, what haircut styles would best suit this person? Do not provide general information, preambles, or disclaimers. Start your answer directly with the face shape and haircut recommendations.",
+            },
+            ...imagesData.map(
+              (img) => {
+                "type": "image_url",
+                "image_url": {
+                  "url": "data:${img['mime']};base64,${img['b64']}",
+                },
+              },
+            ),
+          ],
+        },
       ];
       final body = jsonEncode({
         "model": "gpt-4o",
         "messages": messages,
         "max_tokens": 500,
-        "temperature": 0.7
+        "temperature": 0.7,
       });
       final response = await http.post(
         url,
@@ -78,7 +87,9 @@ class _NextScreenState extends State<NextScreen> {
       String resultText = response.body;
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        resultText = decoded["choices"]?[0]?['message']?["content"] ?? response.body;
+        resultText =
+            decoded["choices"]?[0]?['message']?["content"] ?? response.body;
+        print(resultText);
       }
       if (!mounted) return;
       Navigator.push(
@@ -92,9 +103,9 @@ class _NextScreenState extends State<NextScreen> {
       print('Error: $e');
       print('Stack trace: $stack');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e\n$stack')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e\n$stack')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -105,21 +116,28 @@ class _NextScreenState extends State<NextScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Preview')),
       body: widget.images.isEmpty
-          ? const Center(child: Text('Error, please take pictures again', style: TextStyle(fontSize: 32)))
+          ? const Center(
+              child: Text(
+                'Error, please take pictures again',
+                style: TextStyle(fontSize: 32),
+              ),
+            )
           : Stack(
               children: [
                 ListView(
                   padding: const EdgeInsets.all(16),
                   children: widget.images
-                      .map((img) => Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Image.file(
-                              img,
-                              width: double.infinity,
-                              height: 300,
-                              fit: BoxFit.cover,
-                            ),
-                          ))
+                      .map(
+                        (img) => Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Image.file(
+                            img,
+                            width: double.infinity,
+                            height: 300,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      )
                       .toList(),
                 ),
                 if (_loading)
@@ -149,9 +167,11 @@ class _NextScreenState extends State<NextScreen> {
             padding: const EdgeInsets.only(left: 32, bottom: 16),
             child: FloatingActionButton.extended(
               heroTag: 'cancel',
-              onPressed: _loading ? null : () {
-                Navigator.pop(context);
-              },
+              onPressed: _loading
+                  ? null
+                  : () {
+                      Navigator.pop(context);
+                    },
               backgroundColor: Colors.red,
               label: const Text('Cancel'),
               icon: const Icon(Icons.close),
@@ -160,9 +180,9 @@ class _NextScreenState extends State<NextScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 32, bottom: 16),
             child: FloatingActionButton.extended(
-                heroTag: 'confirm',
-                // TODO: Implement confirm action
-                // onPressed: null,
+              heroTag: 'confirm',
+              // TODO: Implement confirm action
+              // onPressed: null,
               onPressed: _loading ? null : () => _sendToOpenAI(context),
               backgroundColor: Colors.green,
               label: const Text('Confirm'),

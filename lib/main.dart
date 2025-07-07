@@ -27,10 +27,6 @@ class _MyAppState extends State<MyApp> {
       setState(() {
         _selectedImages = images.take(3).toList();
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_selectedImages.length} images selected')),
-      );
-      // Automatically navigate to next page after images are selected
       Future.delayed(const Duration(milliseconds: 300), () {
         Navigator.push(
           context,
@@ -102,34 +98,59 @@ class _MyAppState extends State<MyApp> {
       home: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.blue,
-          title: const Text('The Right Cut'),
+          elevation: 0,
+          title: const Text('The Right Cut', style: TextStyle(color: Colors.white)),
+          centerTitle: true,
         ),
-
-        body: Center(
+        body: Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFe3f2fd), Color(0xFF90caf9)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              const SizedBox(height: 40),
+              const Text(
+                'Find your perfect haircut',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent,
+                  letterSpacing: 1.2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
               Builder(
                 builder: (parentContext) => ElevatedButton(
                   onPressed: () {
                     showModalBottomSheet(
                       context: parentContext,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      ),
                       builder: (BuildContext modalContext) {
                         return SafeArea(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               ListTile(
-                                leading: const Icon(Icons.camera_alt),
-                                title: const Text('Take a picture'),
+                                leading: const Icon(Icons.camera_alt, color: Colors.blueAccent),
+                                title: const Text('Take a picture', style: TextStyle(fontWeight: FontWeight.w500)),
                                 onTap: () {
                                   Navigator.pop(modalContext);
                                   _takePictures(parentContext);
                                 },
                               ),
                               ListTile(
-                                leading: const Icon(Icons.photo_library),
-                                title: const Text('Select from gallery'),
+                                leading: const Icon(Icons.photo_library, color: Colors.blueAccent),
+                                title: const Text('Select from gallery', style: TextStyle(fontWeight: FontWeight.w500)),
                                 onTap: () {
                                   Navigator.pop(modalContext);
                                   _selectMultipleFromGallery(parentContext);
@@ -142,28 +163,18 @@ class _MyAppState extends State<MyApp> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    textStyle: const TextStyle(fontSize: 18),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
+                    textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 4,
                   ),
-                  child: const Text("Take or select pictures"),
+                  child: const Text("Take or select pictures", style: TextStyle(color: Colors.blueAccent)),
                 ),
               ),
-              const SizedBox(height: 24),
-              // if (_selectedImages.isNotEmpty)
-              //   Column(
-              //     children: [
-              //       Wrap(
-              //         spacing: 8,
-              //         children: _selectedImages.map((img) => Image.file(
-              //           File(img.path),
-              //           width: 80,
-              //           height: 80,
-              //           fit: BoxFit.cover,
-              //         )).toList(),
-              //       ),
-              //       const SizedBox(height: 16),
-              //     ],
-              //   ),
+              const SizedBox(height: 40),
             ],
           ),
         )
