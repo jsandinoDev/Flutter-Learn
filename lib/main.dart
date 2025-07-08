@@ -97,10 +97,24 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.blue,
-          elevation: 0,
-          title: const Text('The Right Cut', style: TextStyle(color: Colors.white)),
+          backgroundColor: Colors.blueAccent,
+          elevation: 4,
+          title: const Text(
+            'The Right Cut',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 24,
+              letterSpacing: 1.2,
+            ),
+          ),
           centerTitle: true,
+          iconTheme: const IconThemeData(color: Colors.white),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              bottom: Radius.circular(24),
+            ),
+          ),
         ),
         body: Container(
           width: double.infinity,
@@ -116,6 +130,8 @@ class _MyAppState extends State<MyApp> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
+              Icon(Icons.content_cut, size: 56, color: Colors.blueAccent),
+              const SizedBox(height: 16),
               const Text(
                 'Find your perfect haircut',
                 style: TextStyle(

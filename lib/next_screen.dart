@@ -114,52 +114,84 @@ class _NextScreenState extends State<NextScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Preview')),
-      body: widget.images.isEmpty
-          ? const Center(
-              child: Text(
-                'Error, please take pictures again',
-                style: TextStyle(fontSize: 32),
-              ),
-            )
-          : Stack(
-              children: [
-                ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: widget.images
-                      .map(
-                        (img) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Image.file(
-                            img,
-                            width: double.infinity,
-                            height: 300,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      )
-                      .toList(),
+      appBar: AppBar(
+        backgroundColor: Colors.blueAccent,
+        elevation: 4,
+        title: const Text(
+          'Preview',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+            letterSpacing: 1.2,
+          ),
+        ),
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(24),
+          ),
+        ),
+      ),
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFe3f2fd), Color(0xFF90caf9)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: widget.images.isEmpty
+            ? const Center(
+                child: Text(
+                  'Error, please take pictures again',
+                  style: TextStyle(fontSize: 32),
                 ),
-                if (_loading)
-                  Container(
-                    color: Colors.black.withOpacity(0.5),
-                    child: const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 24),
-                          Text(
-                            'Analyzing your best haircut, wait',
-                            style: TextStyle(color: Colors.white, fontSize: 20),
-                            textAlign: TextAlign.center,
+              )
+            : Stack(
+                children: [
+                  ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: widget.images
+                        .map(
+                          (img) => Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.file(
+                                img,
+                                width: double.infinity,
+                                height: 300,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
-                        ],
+                        )
+                        .toList(),
+                  ),
+                  if (_loading)
+                    Container(
+                      color: Colors.black.withOpacity(0.5),
+                      child: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 24),
+                            Text(
+                              'Analyzing your best haircut, wait',
+                              style: TextStyle(color: Colors.white, fontSize: 20),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
+                ],
+              ),
+      ),
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -172,21 +204,19 @@ class _NextScreenState extends State<NextScreen> {
                   : () {
                       Navigator.pop(context);
                     },
-              backgroundColor: Colors.red,
-              label: const Text('Cancel'),
-              icon: const Icon(Icons.close),
+              backgroundColor: Colors.white,
+              label: const Text('Cancel', style: TextStyle(color: Colors.black)),
+              icon: const Icon(Icons.close, color: Colors.black),
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 32, bottom: 16),
             child: FloatingActionButton.extended(
               heroTag: 'confirm',
-              // TODO: Implement confirm action
-              // onPressed: null,
               onPressed: _loading ? null : () => _sendToOpenAI(context),
-              backgroundColor: Colors.green,
-              label: const Text('Confirm'),
-              icon: const Icon(Icons.check),
+              backgroundColor: Colors.white,
+              label: const Text('Confirm', style: TextStyle(color: Colors.black)),
+              icon: const Icon(Icons.check, color: Colors.black),
             ),
           ),
         ],
